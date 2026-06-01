@@ -7,22 +7,22 @@ param vnetName string
 param addressSpace string
 param subnets array
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2025-05-01' = {
-  name: vnetName
-  location: location
-  properties: {
-    addressSpace: {
-      addressPrefixes: [ addressSpace ]
-    }
-    subnets: [for subnet in subnets: {
-      name: subnet.name
-      properties: {
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
+  name: '${vnetName}-deployment'
+  params: {
+    name: vnetName
+    location: location
+    addressPrefixes: [addressSpace]
+    subnets: [
+      for (subnet, index) in subnets: {
+        name: subnet.name
         addressPrefix: subnet.addressPrefix
+        delegation: subnet.delegation
       }
-    }]
+    ]
   }
 }
 
-output vnetId string = virtualNetwork.id
-output subnetIds array = [for subnet in subnets:'${virtualNetwork.id}/subnets/${subnet.name}']
+output vnetId string = virtualNetwork.outputs.resourceId
+output subnetResourceIds array = virtualNetwork.outputs.subnetResourceIds
 

@@ -12,12 +12,13 @@ param subnets array
 
 var namingConvention = '${projectCode}-${environment}'
 
+
 module vnet './modules/modVnet.bicep' = {
   params: {
     location: location
     addressSpace: vnetAddressSpace
-    subnets: subnets
     vnetName: 'vnet-${namingConvention}-001'
+    subnets: subnets
   }
 }
 
@@ -35,7 +36,7 @@ module webApp './modules/webApp.bicep' = {
     appServicePlanId: appServicePlan.outputs.appServicePlanId
     webAppName: take('web${environment}${uniqueString(resourceGroup().id)}', 50)
     //environment: environment
-    //vnetIntegrationSubnetId: vnet.outputs.subnetIds[0]
+    vnetIntegrationSubnetId: vnet.outputs.subnetResourceIds[0]
   }
 }
 
