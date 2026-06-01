@@ -7,6 +7,7 @@ param location string
 param webAppName string
 param appServicePlanId string
 param vnetIntegrationSubnetId string?
+param appiId string
 
 module webApp 'br/public:avm/res/web/site:0.23.1' = {
   name: '${webAppName}-deployment'
@@ -16,11 +17,19 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
     serverFarmResourceId: appServicePlanId
     virtualNetworkSubnetResourceId: vnetIntegrationSubnetId
     location: location
-     siteConfig: {
+    siteConfig: {
       linuxFxVersion: 'NODE|20'
       vnetRouteAllEnabled: true
       minTlsVersion: '1.2'      
     }
+    configs: !empty(appiId)
+      ? [
+          {
+            name: 'appsettings'
+            applicationInsightResourceId: appiId
+          }
+        ]
+      : []    
   }  
 }
 

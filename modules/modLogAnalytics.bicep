@@ -15,6 +15,5 @@ module workspace 'br/public:avm/res/operational-insights/workspace:0.15.1' = {
   }
 }
 
-
-output logAnalyticsID string = workspace.outputs.resourceId
+output logAnalyticsId string = workspace.outputs.resourceId
 

@@ -30,16 +30,6 @@ module appServicePlan './modules/modAppServicePlan.bicep' = {
   }
 }
 
-module webApp './modules/webApp.bicep' = {
-  params: {
-    location: location
-    appServicePlanId: appServicePlan.outputs.appServicePlanId
-    webAppName: take('web${environment}${uniqueString(resourceGroup().id)}', 50)
-    //environment: environment
-    vnetIntegrationSubnetId: vnet.outputs.subnetResourceIds[0]
-  }
-}
-
 module logAnalytics './modules/modLogAnalytics.bicep' = {
   params: {
     location: location
@@ -48,3 +38,21 @@ module logAnalytics './modules/modLogAnalytics.bicep' = {
   }
 }
 
+module appInsights './modules/modAppInsights.bicep' = {
+  params: {
+    location: location
+    appiName: 'appi-${namingConvention}-001'
+    workspaceResourceId: logAnalytics.outputs.logAnalyticsId
+  }
+}
+
+module webApp './modules/webApp.bicep' = {
+  params: {
+    location: location
+    appServicePlanId: appServicePlan.outputs.appServicePlanId
+    webAppName: take('web${environment}${uniqueString(resourceGroup().id)}', 50)
+    //environment: environment
+    vnetIntegrationSubnetId: vnet.outputs.subnetResourceIds[0]
+    appiId: appInsights.outputs.appiId
+  }
+}
