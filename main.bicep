@@ -12,6 +12,13 @@ param subnets array
 
 var namingConvention = '${projectCode}-${environment}'
 
+module keyVault './modules/modKeyVault.bicep' = {
+  params: {
+    location: location
+    environment: environment
+    kvName: 'kv-${namingConvention}-001'
+  }
+}
 
 module vnet './modules/modVnet.bicep' = {
   params: {
@@ -51,8 +58,21 @@ module webApp './modules/webApp.bicep' = {
     location: location
     appServicePlanId: appServicePlan.outputs.appServicePlanId
     webAppName: take('web${environment}${uniqueString(resourceGroup().id)}', 50)
-    //environment: environment
     vnetIntegrationSubnetId: vnet.outputs.subnetResourceIds[0]
     appiId: appInsights.outputs.appiId
+    kvName: keyVault.outputs.kvName
   }
 }
+
+module rbacKeyVault './modules/modRBACKeyVault.bicep' = {
+  params: {
+    keyVaultName: keyVault.outputs.kvName
+    roleAssignments: [
+      {
+        principalId: webApp.outputs.webAppPrincipalId
+        roleDefinitionId: '4633458b-17de-408a-b874-0445c86b69e6'
+      }
+    ]
+  }
+}
+

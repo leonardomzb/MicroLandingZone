@@ -3,11 +3,11 @@
 metadata description = 'Modulo de creacion de Web App'
 
 param location string
-//param environment string
 param webAppName string
 param appServicePlanId string
 param vnetIntegrationSubnetId string?
 param appiId string
+param kvName string
 
 module webApp 'br/public:avm/res/web/site:0.23.1' = {
   name: '${webAppName}-deployment'
@@ -17,6 +17,9 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
     serverFarmResourceId: appServicePlanId
     virtualNetworkSubnetResourceId: vnetIntegrationSubnetId
     location: location
+    managedIdentities: {
+      systemAssigned: true
+    }
     siteConfig: {
       linuxFxVersion: 'NODE|20'
       vnetRouteAllEnabled: true
@@ -27,6 +30,9 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
           {
             name: 'appsettings'
             applicationInsightResourceId: appiId
+            properties: {
+              SQL_ADMIN_PASSWORD: '@Microsoft.KeyVault(VaultName=${kvName};SecretName=sqlAdminPassword)'
+            }
           }
         ]
       : []    
@@ -34,5 +40,6 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
 }
 
 output webAppId string = webApp.outputs.resourceId
-output webAppSefaultHostname string = webApp.outputs.defaultHostname
+output webAppDefaultHostname string = webApp.outputs.defaultHostname
+output webAppPrincipalId string = webApp.outputs.systemAssignedMIPrincipalId!
 
