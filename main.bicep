@@ -27,7 +27,7 @@ type subnetConfig = {
 @description('Configuración de subredes de la VNet')
 param subnets array
 
-var namingConvention = '${projectCode}-${environment}'
+var namingConvention = replace(toLower('${projectCode}-${environment}'),  ' ',  '')
 
 //Key Vault para simular existencia previa de secretos
 module keyVault './modules/KeyVault.bicep' = {
@@ -87,7 +87,19 @@ module webApp './modules/webApp.bicep' = {
   }
 }
 
-//Asignación de rol en Key Vault
+//SQL Server
+module sqlServer './modules/sqlServer.bicep' = {
+  params: {
+    location: location
+    sqlServerName: take('sql-${namingConvention}-${uniqueString(resourceGroup().id)}-001', 63)
+    databaseName: 'sqldb-${namingConvention}-001'
+    environment: environment
+    keyVaultName: keyVault.outputs.keyVaultName
+  }
+}
+
+
+//Asignación de roles a Key Vault
 module rbacKeyVault './modules/RBACKeyVault.bicep' = {
   params: {
     keyVaultName: keyVault.outputs.keyVaultName

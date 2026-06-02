@@ -3,7 +3,7 @@
 using '../main.bicep'
 
 param location = 'centralus'
-param projectCode = 'MicroLZ'
+param projectCode = 'MicroLZ'  //Solo letras
 param environment = 'dev'
 
 param vnetAddressSpace = '10.0.0.0/16'
