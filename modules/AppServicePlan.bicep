@@ -2,8 +2,11 @@
 // modAppServicePlan.bicep
 metadata description = 'Modulo de creacion de Vnet'
 
+@description('Región de Azure donde se desplegarán los recursos')
 param location string
+@description('Entorno de despliegue')
 param environment string
+@description('Nombre del plan de servicio de aplicación')
 param appServicePlanName string
 
 module appServicePlan 'br/public:avm/res/web/serverfarm:0.7.0' = {

@@ -3,11 +3,16 @@
 metadata description = 'Modulo de creacion de Web App'
 
 param location string
+@description('Nombre de la Web App')
 param webAppName string
+@description('Resource ID del App Service Plan donde se hospedará la Web App')
 param appServicePlanId string
+@description('Resource ID de la subnet utilizada para VNet Integration. Opcional')
 param vnetIntegrationSubnetId string?
+@description('Resource ID de Application Insights')
 param appiId string
-param kvName string
+@description('Nombre del Azure Key Vault utilizado por la aplicación')
+param keyVaultName string
 
 module webApp 'br/public:avm/res/web/site:0.23.1' = {
   name: '${webAppName}-deployment'
@@ -31,7 +36,7 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
             name: 'appsettings'
             applicationInsightResourceId: appiId
             properties: {
-              SQL_ADMIN_PASSWORD: '@Microsoft.KeyVault(VaultName=${kvName};SecretName=sqlAdminPassword)'
+              SQL_ADMIN_PASSWORD: '@Microsoft.KeyVault(VaultName=${keyVaultName};SecretName=sqlAdminPassword)'
             }
           }
         ]
@@ -39,7 +44,10 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
   }  
 }
 
+@description('Resource ID de la Web App creada')
 output webAppId string = webApp.outputs.resourceId
+@description('Hostname predeterminado de la Web App')
 output webAppDefaultHostname string = webApp.outputs.defaultHostname
+@description('ID del principal de identidad administrada de la Web App')
 output webAppPrincipalId string = webApp.outputs.systemAssignedMIPrincipalId!
 

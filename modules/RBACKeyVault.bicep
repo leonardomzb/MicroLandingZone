@@ -2,7 +2,9 @@
 // modRBACKeyVault.bicep
 metadata description = 'Modulo para la asginacion de permisos RBAC'
 
+@description('Nombre de key vault')
 param keyVaultName string
+@description('Arreglo con Id de identidad junto con Id de rol a asignar')
 param roleAssignments array
 
 resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {

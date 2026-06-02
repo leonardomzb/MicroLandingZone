@@ -2,16 +2,19 @@
 // modKeyVault.bicep
 metadata description = 'Modulo de creacion de Key Vault (Simulando una keyVault con secretos ya existente)'
 
+@description('Región de Azure donde se desplegarán los recursos')
 param location string
-param kvName string
+@description('Nombre del Azure Key Vault')
+param keyVaultName string
+@description('Entorno de despliegue')
 param environment string
 
-var sqlAdminPassword = '${uniqueString(resourceGroup().id, deployment().name)}${kvName}'
+var sqlAdminPassword = '${uniqueString(resourceGroup().id, deployment().name)}${keyVaultName}'
 
 module vault 'br/public:avm/res/key-vault/vault:0.13.3' = {
-  name: '${kvName}-deployment'
+  name: '${keyVaultName}-deployment'
   params: {
-    name: kvName
+    name: keyVaultName
     location: location
     enablePurgeProtection: environment == 'prod' ? true : false
     enableSoftDelete: true
@@ -30,6 +33,8 @@ module vault 'br/public:avm/res/key-vault/vault:0.13.3' = {
   }  
 }
 
-output kvName string = vault.outputs.name
+@description('Nombre del Key Vault creado')
+output keyVaultName string = vault.outputs.name
+@description('URI del Key Vault creado')
 output kvUri string = vault.outputs.uri
 

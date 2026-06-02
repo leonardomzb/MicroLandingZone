@@ -2,25 +2,44 @@
 // main.bicep
 metadata description = 'Main.bicep - Micro Landing Zone'
 
+@description('Región de Azure donde se desplegarán los recursos')
 param location string = resourceGroup().location
-@allowed(['dev', 'test', 'prod'])
+
+@description('Entorno de despliegue')
+@allowed([
+  'dev'
+  'test'
+  'prod'
+])
 param environment string
+
+@description('Código o identificador del proyecto utilizado en la nomenclatura de recursos')
 param projectCode string
 
+@description('Espacio de direcciones CIDR asignado a la red virtual')
 param vnetAddressSpace string
+
+type subnetConfig = {
+  name: string
+  addressPrefix: string
+  delegation: string
+}
+@description('Configuración de subredes de la VNet')
 param subnets array
 
 var namingConvention = '${projectCode}-${environment}'
 
-module keyVault './modules/modKeyVault.bicep' = {
+//Key Vault para simular existencia previa de secretos
+module keyVault './modules/KeyVault.bicep' = {
   params: {
     location: location
     environment: environment
-    kvName: 'kv-${namingConvention}-001'
+    keyVaultName: take('kv-${namingConvention}-${uniqueString(resourceGroup().id)}', 24)
   }
 }
 
-module vnet './modules/modVnet.bicep' = {
+//Vnet con Subnets
+module vnet './modules/Vnet.bicep' = {
   params: {
     location: location
     addressSpace: vnetAddressSpace
@@ -29,7 +48,8 @@ module vnet './modules/modVnet.bicep' = {
   }
 }
 
-module appServicePlan './modules/modAppServicePlan.bicep' = {
+//App Service Plan
+module appServicePlan './modules/AppServicePlan.bicep' = {
   params: {
     location: location
     appServicePlanName: 'asp-${namingConvention}-001'
@@ -37,7 +57,8 @@ module appServicePlan './modules/modAppServicePlan.bicep' = {
   }
 }
 
-module logAnalytics './modules/modLogAnalytics.bicep' = {
+//Log Analytics Workspace
+module logAnalytics './modules/LogAnalytics.bicep' = {
   params: {
     location: location
     environment: environment
@@ -45,7 +66,8 @@ module logAnalytics './modules/modLogAnalytics.bicep' = {
   }
 }
 
-module appInsights './modules/modAppInsights.bicep' = {
+//App Insights
+module appInsights './modules/AppInsights.bicep' = {
   params: {
     location: location
     appiName: 'appi-${namingConvention}-001'
@@ -53,6 +75,7 @@ module appInsights './modules/modAppInsights.bicep' = {
   }
 }
 
+//Web App
 module webApp './modules/webApp.bicep' = {
   params: {
     location: location
@@ -60,13 +83,14 @@ module webApp './modules/webApp.bicep' = {
     webAppName: take('web${environment}${uniqueString(resourceGroup().id)}', 50)
     vnetIntegrationSubnetId: vnet.outputs.subnetResourceIds[0]
     appiId: appInsights.outputs.appiId
-    kvName: keyVault.outputs.kvName
+    keyVaultName: keyVault.outputs.keyVaultName
   }
 }
 
-module rbacKeyVault './modules/modRBACKeyVault.bicep' = {
+//Asignación de rol en Key Vault
+module rbacKeyVault './modules/RBACKeyVault.bicep' = {
   params: {
-    keyVaultName: keyVault.outputs.kvName
+    keyVaultName: keyVault.outputs.keyVaultName
     roleAssignments: [
       {
         principalId: webApp.outputs.webAppPrincipalId
