@@ -15,7 +15,7 @@ param subnets = [
     delegation: 'Microsoft.Web/serverFarms'
   }
   {
-    name: 'data-subnet'
+    name: 'privateEndpoint-subnet'
     addressPrefix: '10.0.2.0/24'
     delegation: null
   }

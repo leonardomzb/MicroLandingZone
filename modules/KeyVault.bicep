@@ -20,6 +20,7 @@ module vault 'br/public:avm/res/key-vault/vault:0.13.3' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: environment == 'prod' ? 90 : 7    
     enableRbacAuthorization: true
+    publicNetworkAccess: 'Disabled'
     secrets: [
       {
         name: 'sqlAdminPassword'
@@ -37,4 +38,6 @@ module vault 'br/public:avm/res/key-vault/vault:0.13.3' = {
 output keyVaultName string = vault.outputs.name
 @description('URI del Key Vault creado')
 output kvUri string = vault.outputs.uri
+@description('ID del recurso del Key Vault creado')
+output kvResourceId string = vault.outputs.resourceId
 

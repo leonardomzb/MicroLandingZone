@@ -26,6 +26,8 @@ module server 'br/public:avm/res/sql/server:0.21.2' = {
     name: sqlServerName
     administratorLogin: sqlAdminLogin
     administratorLoginPassword: keyVault.getSecret('sqlAdminPassword')
+    publicNetworkAccess: 'Disabled'
+    restrictOutboundNetworkAccess: 'Enabled'
     databases: [
       {
         name: databaseName

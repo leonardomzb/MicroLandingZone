@@ -29,7 +29,7 @@ param subnets array
 
 var namingConvention = replace(toLower('${projectCode}-${environment}'),  ' ',  '')
 
-//Key Vault para simular existencia previa de secretos
+//Key Vault para simular existencia de secretos
 module keyVault './modules/KeyVault.bicep' = {
   params: {
     location: location
@@ -107,8 +107,46 @@ module rbacKeyVault './modules/RBACKeyVault.bicep' = {
       {
         principalId: webApp.outputs.webAppPrincipalId
         roleDefinitionId: '4633458b-17de-408a-b874-0445c86b69e6'
+        principalType: 'ServicePrincipal'
       }
     ]
   }
 }
 
+//Simulacion de existencia de zonas DNS privadas
+module dnsPZone './modules/privateDNSZone.bicep' = {
+  name: 'layer-dnspzone-deployment'
+  params: {
+    vnetId: vnet.outputs.vnetId
+  }
+}
+
+//Private Endpoint para Key Vault
+module privateEndpointKeyVault './modules/privateEndpoint.bicep' = {
+  params: {
+    location: location
+    groupIds: [
+      'vault'
+    ]
+    privateEndpointName: 'pep-kv-${namingConvention}-001'
+    privateEndpointSubnetId: vnet.outputs.subnetResourceIds[1]
+    privateLinkName: 'kvLink-${namingConvention}-001'
+    privateLinkServiceId: keyVault.outputs.kvResourceId
+    privateDnsZoneId: dnsPZone.outputs.kvPrivateDnsZoneId
+  }
+}
+
+//Private Endpoint para SQL Server
+module privateEndpointSqlServer './modules/privateEndpoint.bicep' = {
+  params: {
+    location: location
+    groupIds: [
+      'sqlServer'
+    ]
+    privateEndpointName: 'pep-sql-${namingConvention}-001'
+    privateEndpointSubnetId: vnet.outputs.subnetResourceIds[1]
+    privateLinkName: 'sqlLink-${namingConvention}-001'
+    privateLinkServiceId: sqlServer.outputs.sqlServerResourceId
+    privateDnsZoneId: dnsPZone.outputs.sqlPrivateDnsZoneId
+  }
+}

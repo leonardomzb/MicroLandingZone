@@ -10,4 +10,13 @@ Proyecto personal de practica. Despliegue de infraestructura en Azure mediante u
   - Azure RBAC
   - Log Analytics Workspace
   - Application Insights
+  - SQL Server
+  - Private Endpoint
 
+##Características
+
+  - 100% Bicep
+  - Key Vault y servidor SQL sin acceso público
+  - Uso de Managed Identity
+  - Secretos en Key Vault
+  - Conectividad privada mediante Private Link
