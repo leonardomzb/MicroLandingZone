@@ -14,6 +14,8 @@ param databaseName string
 param keyVaultName string
 @description('Nombre de usuario administrador del SQL Server')
 param sqlAdminLogin string = 'sqlAdmin'
+@description('Resource ID del Log Analytics Workspace para configurar diagnósticos')
+param logAnalyticsId string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2025-05-01' existing = {
   name: keyVaultName
@@ -39,6 +41,22 @@ module server 'br/public:avm/res/sql/server:0.21.2' = {
           tier: environment == 'prod' ? 'Standard' : 'Basic'
           capacity: environment == 'prod' ? 10 : 5
         }
+        diagnosticSettings: [
+          {
+            name: 'diag-${sqlServerName}'
+            workspaceResourceId: logAnalyticsId
+            logCategoriesAndGroups: [
+              {
+                categoryGroup: 'allLogs'
+              }
+            ]
+            metricCategories: [
+              {
+                category: 'AllMetrics'
+              }
+            ]
+          }
+        ]
       }
     ]
   }

@@ -12,6 +12,7 @@ Proyecto personal de practica. Despliegue de infraestructura en Azure mediante u
   - Application Insights
   - SQL Server
   - Private Endpoint
+  - Diagnostic Settings
 
 ##Características
 

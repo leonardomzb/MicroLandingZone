@@ -29,14 +29,6 @@ param subnets array
 
 var namingConvention = replace(toLower('${projectCode}-${environment}'),  ' ',  '')
 
-//Key Vault para simular existencia de secretos
-module keyVault './modules/KeyVault.bicep' = {
-  params: {
-    location: location
-    environment: environment
-    keyVaultName: take('kv-${namingConvention}-${uniqueString(resourceGroup().id)}', 24)
-  }
-}
 
 //Vnet con Subnets
 module vnet './modules/Vnet.bicep' = {
@@ -45,15 +37,6 @@ module vnet './modules/Vnet.bicep' = {
     addressSpace: vnetAddressSpace
     vnetName: 'vnet-${namingConvention}-001'
     subnets: subnets
-  }
-}
-
-//App Service Plan
-module appServicePlan './modules/AppServicePlan.bicep' = {
-  params: {
-    location: location
-    appServicePlanName: 'asp-${namingConvention}-001'
-    environment: environment
   }
 }
 
@@ -66,6 +49,16 @@ module logAnalytics './modules/LogAnalytics.bicep' = {
   }
 }
 
+//Key Vault para simular existencia de secretos
+module keyVault './modules/KeyVault.bicep' = {
+  params: {
+    location: location
+    environment: environment
+    keyVaultName: take('kv-${namingConvention}-${uniqueString(resourceGroup().id)}', 24)
+    logAnalyticsId: logAnalytics.outputs.logAnalyticsId
+  }
+}
+
 //App Insights
 module appInsights './modules/AppInsights.bicep' = {
   params: {
@@ -74,6 +67,17 @@ module appInsights './modules/AppInsights.bicep' = {
     workspaceResourceId: logAnalytics.outputs.logAnalyticsId
   }
 }
+
+//App Service Plan
+module appServicePlan './modules/AppServicePlan.bicep' = {
+  params: {
+    location: location
+    appServicePlanName: 'asp-${namingConvention}-001'
+    environment: environment
+  }
+}
+
+
 
 //Web App
 module webApp './modules/webApp.bicep' = {
@@ -84,6 +88,7 @@ module webApp './modules/webApp.bicep' = {
     vnetIntegrationSubnetId: vnet.outputs.subnetResourceIds[0]
     appiId: appInsights.outputs.appiId
     keyVaultName: keyVault.outputs.keyVaultName
+    logAnalyticsId: logAnalytics.outputs.logAnalyticsId
   }
 }
 
@@ -95,6 +100,7 @@ module sqlServer './modules/sqlServer.bicep' = {
     databaseName: 'sqldb-${namingConvention}-001'
     environment: environment
     keyVaultName: keyVault.outputs.keyVaultName
+    logAnalyticsId: logAnalytics.outputs.logAnalyticsId
   }
 }
 

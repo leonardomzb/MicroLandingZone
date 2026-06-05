@@ -8,7 +8,10 @@ param location string
 param keyVaultName string
 @description('Entorno de despliegue')
 param environment string
+@description('Resource ID del Log Analytics Workspace para configurar diagnósticos')
+param logAnalyticsId string
 
+//Se genera solo para demostracion y simulacion de existencia de secretos.
 var sqlAdminPassword = '${uniqueString(resourceGroup().id, deployment().name)}${keyVaultName}'
 
 module vault 'br/public:avm/res/key-vault/vault:0.13.3' = {
@@ -18,7 +21,7 @@ module vault 'br/public:avm/res/key-vault/vault:0.13.3' = {
     location: location
     enablePurgeProtection: environment == 'prod' ? true : false
     enableSoftDelete: true
-    softDeleteRetentionInDays: environment == 'prod' ? 90 : 7    
+    softDeleteRetentionInDays: environment == 'prod' ? 90 : 7
     enableRbacAuthorization: true
     publicNetworkAccess: 'Disabled'
     secrets: [
@@ -31,7 +34,23 @@ module vault 'br/public:avm/res/key-vault/vault:0.13.3' = {
         }
       }
     ]
-  }  
+    diagnosticSettings: [
+      {
+        name: 'diag-${keyVaultName}'
+        workspaceResourceId: logAnalyticsId
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+          }
+        ]
+        metricCategories: [
+          {
+            category: 'AllMetrics'
+          }
+        ]
+      }
+    ]
+  }
 }
 
 @description('Nombre del Key Vault creado')
@@ -40,4 +59,3 @@ output keyVaultName string = vault.outputs.name
 output kvUri string = vault.outputs.uri
 @description('ID del recurso del Key Vault creado')
 output kvResourceId string = vault.outputs.resourceId
-

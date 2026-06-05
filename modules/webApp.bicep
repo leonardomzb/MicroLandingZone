@@ -13,6 +13,8 @@ param vnetIntegrationSubnetId string?
 param appiId string
 @description('Nombre del Azure Key Vault utilizado por la aplicación')
 param keyVaultName string
+@description('Resource ID del Log Analytics Workspace para configurar diagnósticos')
+param logAnalyticsId string
 
 module webApp 'br/public:avm/res/web/site:0.23.1' = {
   name: '${webAppName}-deployment'
@@ -28,7 +30,7 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
     siteConfig: {
       linuxFxVersion: 'NODE|20'
       vnetRouteAllEnabled: true
-      minTlsVersion: '1.2'      
+      minTlsVersion: '1.2'
     }
     configs: !empty(appiId)
       ? [
@@ -40,8 +42,24 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
             }
           }
         ]
-      : []    
-  }  
+      : []
+    diagnosticSettings: [
+      {
+        name: 'diag-${webAppName}'
+        workspaceResourceId: logAnalyticsId
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+          }
+        ]
+        metricCategories: [
+          {
+            category: 'AllMetrics'
+          }
+        ]
+      }
+    ]
+  }
 }
 
 @description('Resource ID de la Web App creada')
@@ -50,4 +68,3 @@ output webAppId string = webApp.outputs.resourceId
 output webAppDefaultHostname string = webApp.outputs.defaultHostname
 @description('ID del principal de identidad administrada de la Web App')
 output webAppPrincipalId string = webApp.outputs.systemAssignedMIPrincipalId!
-
