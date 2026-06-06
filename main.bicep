@@ -3,7 +3,7 @@
 metadata description = 'Main.bicep - Micro Landing Zone'
 
 @description('Región de Azure donde se desplegarán los recursos')
-param location string = resourceGroup().location
+param location string 
 
 @description('Entorno de despliegue')
 @allowed([
@@ -12,9 +12,6 @@ param location string = resourceGroup().location
   'prod'
 ])
 param environment string
-
-@description('Código o identificador del proyecto utilizado en la nomenclatura de recursos')
-param projectCode string
 
 @description('Espacio de direcciones CIDR asignado a la red virtual')
 param vnetAddressSpace string
@@ -27,8 +24,15 @@ type subnetConfig = {
 @description('Configuración de subredes de la VNet')
 param subnets array
 
-var namingConvention = replace(toLower('${projectCode}-${environment}'),  ' ',  '')
+@description('Nombre del Key Vault creado en el módulo de simulación')
+param keyVaultName string
+@description('ID del recurso del Key Vault creado en el módulo de simulación') 
+param keyVaultResourceId string
+@description('Nombre del Resource Group donde se creó el Key Vault')
+param keyVaultResourceGroupName string
 
+@description('Convención de nomenclatura base para los recursos')
+param namingConvention string
 
 //Vnet con Subnets
 module vnet './modules/Vnet.bicep' = {
@@ -49,15 +53,6 @@ module logAnalytics './modules/LogAnalytics.bicep' = {
   }
 }
 
-//Key Vault para simular existencia de secretos
-module keyVault './modules/KeyVault.bicep' = {
-  params: {
-    location: location
-    environment: environment
-    keyVaultName: take('kv-${namingConvention}-${uniqueString(resourceGroup().id)}', 24)
-    logAnalyticsId: logAnalytics.outputs.logAnalyticsId
-  }
-}
 
 //App Insights
 module appInsights './modules/AppInsights.bicep' = {
@@ -78,7 +73,6 @@ module appServicePlan './modules/AppServicePlan.bicep' = {
 }
 
 
-
 //Web App
 module webApp './modules/webApp.bicep' = {
   params: {
@@ -87,7 +81,7 @@ module webApp './modules/webApp.bicep' = {
     webAppName: take('web${environment}${uniqueString(resourceGroup().id)}', 50)
     vnetIntegrationSubnetId: vnet.outputs.subnetResourceIds[0]
     appiId: appInsights.outputs.appiId
-    keyVaultName: keyVault.outputs.keyVaultName
+    keyVaultName: keyVaultName
     logAnalyticsId: logAnalytics.outputs.logAnalyticsId
   }
 }
@@ -99,7 +93,8 @@ module sqlServer './modules/sqlServer.bicep' = {
     sqlServerName: take('sql-${namingConvention}-${uniqueString(resourceGroup().id)}-001', 63)
     databaseName: 'sqldb-${namingConvention}-001'
     environment: environment
-    keyVaultName: keyVault.outputs.keyVaultName
+    keyVaultName: keyVaultName
+    keyVaultResourceGroupName: keyVaultResourceGroupName
     logAnalyticsId: logAnalytics.outputs.logAnalyticsId
   }
 }
@@ -108,7 +103,8 @@ module sqlServer './modules/sqlServer.bicep' = {
 //Asignación de roles a Key Vault
 module rbacKeyVault './modules/RBACKeyVault.bicep' = {
   params: {
-    keyVaultName: keyVault.outputs.keyVaultName
+    keyVaultName: keyVaultName
+    keyVaultResourceGroupName: keyVaultResourceGroupName
     roleAssignments: [
       {
         principalId: webApp.outputs.webAppPrincipalId
@@ -137,7 +133,7 @@ module privateEndpointKeyVault './modules/privateEndpoint.bicep' = {
     privateEndpointName: 'pep-kv-${namingConvention}-001'
     privateEndpointSubnetId: vnet.outputs.subnetResourceIds[1]
     privateLinkName: 'kvLink-${namingConvention}-001'
-    privateLinkServiceId: keyVault.outputs.kvResourceId
+    privateLinkServiceId: keyVaultResourceId
     privateDnsZoneId: dnsPZone.outputs.kvPrivateDnsZoneId
   }
 }

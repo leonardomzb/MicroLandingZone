@@ -1,6 +1,6 @@
 
 //dev.bicepparam
-using '../main.bicep'
+using '../deploy-subscription.bicep'
 
 param location = 'centralus'
 param projectCode = 'MicroLZ'  //Solo letras

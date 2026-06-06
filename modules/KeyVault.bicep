@@ -8,8 +8,7 @@ param location string
 param keyVaultName string
 @description('Entorno de despliegue')
 param environment string
-@description('Resource ID del Log Analytics Workspace para configurar diagnósticos')
-param logAnalyticsId string
+
 
 //Se genera solo para demostracion y simulacion de existencia de secretos.
 var sqlAdminPassword = '${uniqueString(resourceGroup().id, deployment().name)}${keyVaultName}'
@@ -34,22 +33,6 @@ module vault 'br/public:avm/res/key-vault/vault:0.13.3' = {
         }
       }
     ]
-    diagnosticSettings: [
-      {
-        name: 'diag-${keyVaultName}'
-        workspaceResourceId: logAnalyticsId
-        logCategoriesAndGroups: [
-          {
-            categoryGroup: 'allLogs'
-          }
-        ]
-        metricCategories: [
-          {
-            category: 'AllMetrics'
-          }
-        ]
-      }
-    ]
   }
 }
 
@@ -59,3 +42,5 @@ output keyVaultName string = vault.outputs.name
 output kvUri string = vault.outputs.uri
 @description('ID del recurso del Key Vault creado')
 output kvResourceId string = vault.outputs.resourceId
+@description('Nombre del Resource Group donde se creó el Key Vault')
+output kvResourceGroupName string = vault.outputs.resourceGroupName

@@ -12,13 +12,21 @@ param sqlServerName string
 param databaseName string
 @description('Nombre del Azure Key Vault que contiene el secreto sqlAdminPassword')
 param keyVaultName string
+@description('Nombre del Resource Group donde se creó el Key Vault') 
+param keyVaultResourceGroupName string
 @description('Nombre de usuario administrador del SQL Server')
 param sqlAdminLogin string = 'sqlAdmin'
 @description('Resource ID del Log Analytics Workspace para configurar diagnósticos')
 param logAnalyticsId string
 
+resource kvResourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' existing = {
+  name: keyVaultResourceGroupName
+  scope: subscription()
+}
+
 resource keyVault 'Microsoft.KeyVault/vaults@2025-05-01' existing = {
   name: keyVaultName
+  scope: kvResourceGroup
 }
 
 module server 'br/public:avm/res/sql/server:0.21.2' = {
