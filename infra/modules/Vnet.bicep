@@ -20,15 +20,18 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
     subnets: [
       for (subnet, index) in subnets: {
         name: subnet.name
-        addressPrefix: subnet.addressPrefix
+        addressPrefix: subnet.ipAddressRange
         delegation: subnet.delegation
       }
     ]
   }
 }
 
+
 @description('Resource ID de la VNet creada')
 output vnetId string = virtualNetwork.outputs.resourceId
+@description('Nombre de la VNet creada')
+output vnetName string = virtualNetwork.outputs.name
 @description('IDs de recurso de las subredes creadas')
 output subnetResourceIds array = virtualNetwork.outputs.subnetResourceIds
 
