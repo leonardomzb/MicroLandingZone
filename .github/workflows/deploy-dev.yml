@@ -1,0 +1,29 @@
+name: Deploy a Azure
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ infra ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  push_infra:
+    uses: leonardomzb/workflow-templates/.github/workflows/bicep-pipeline.yml@main
+    with:
+      deploy_name: 'hubspoke-dep-stack'
+      scopeLevel: 'resourceGroup' 
+      resource_group: 'rg-hubspoke'
+      #azure_region: 'eastus'
+      #bicep_version: '0.43.8'
+      bicep_file: './infra/main.bicep'
+      parameter_file: './infra/environments/dev/dev.bicepparam'
+      environmentType: dev
+    secrets:
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

@@ -3,7 +3,12 @@
 metadata description = 'Modulo de creacion de zona DNS privada'
 
 @description('ID de la VNet a la que se asociarán las zonas DNS privadas')
-param vnetId string
+param vnetIds array
+
+// Vnets id a formato AVM
+var networkLinks = [for id in vnetIds: {
+  virtualNetworkResourceId: id
+}]
 
 // DNS para Key Vault
 module kvPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
@@ -11,11 +16,7 @@ module kvPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
   params: {
     name: 'privatelink${environment().suffixes.keyvaultDns}'
     location: 'global'
-    virtualNetworkLinks: [
-      {
-        virtualNetworkResourceId: vnetId
-      }
-    ]
+    virtualNetworkLinks: networkLinks
   }
 }
 
@@ -25,11 +26,7 @@ module sqlPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
   params: {
     name: 'privatelink${environment().suffixes.sqlServerHostname}'
     location: 'global'
-    virtualNetworkLinks: [
-      {
-        virtualNetworkResourceId: vnetId
-      }
-    ]
+    virtualNetworkLinks: networkLinks
   }
 }
 

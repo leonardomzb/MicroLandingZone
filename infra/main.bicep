@@ -1,9 +1,19 @@
 
 // main.bicep
-metadata description = 'Main.bicep - Micro Landing Zone'
+metadata description = 'Main.bicep - Landing Zone'
+
+targetScope= 'resourceGroup'
+
+@description('Código o identificador del proyecto utilizado en la nomenclatura de recursos')
+param projectCode string
 
 @description('Región de Azure donde se desplegarán los recursos')
 param location string 
+
+@description('Nombre de key vault dedicada al ambiente')
+param keyVaultName string
+
+param keyVaultResourceGroupName string
 
 @description('Entorno de despliegue')
 @allowed([
@@ -13,39 +23,58 @@ param location string
 ])
 param environment string
 
-@description('Espacio de direcciones CIDR asignado a la red virtual')
-param vnetAddressSpace string
-
-type subnetConfig = {
-  name: string
-  addressPrefix: string
-  delegation: string
-}
-@description('Configuración de subredes de la VNet')
-param subnets array
-
-@description('Nombre del Key Vault creado en el módulo de simulación')
-param keyVaultName string
-@description('ID del recurso del Key Vault creado en el módulo de simulación') 
-param keyVaultResourceId string
-@description('Nombre del Resource Group donde se creó el Key Vault')
-param keyVaultResourceGroupName string
+@description('Datos de configuracion de vnets')
+param vnetConfig array
 
 @description('Convención de nomenclatura base para los recursos')
-param namingConvention string
+var namingConvention = replace(toLower('${environment}-${projectCode}'),  ' ',  '')
 
-//Vnet con Subnets
-module vnet './modules/Vnet.bicep' = {
+//  VNET HUB
+module vnetshub 'modules/Vnet.bicep' = {
+  name:'vnet-hub'
   params: {
     location: location
-    addressSpace: vnetAddressSpace
-    vnetName: 'vnet-${namingConvention}-001'
-    subnets: subnets
+    addressSpace: vnetConfig[0].addressPrefix
+    subnets: vnetConfig[0].subnets
+    vnetName: '${vnetConfig[0].name}-${namingConvention}-001'
   }
 }
 
-//Log Analytics Workspace
+//  VNET SPOKE
+module vnetsspoke 'modules/Vnet.bicep' = {
+  name: 'vnet-spoke'
+  params: {
+    location: location
+    addressSpace: vnetConfig[1].addressPrefix
+    subnets: vnetConfig[1].subnets
+    vnetName: '${vnetConfig[1].name}-${namingConvention}-001'
+  }
+}
+
+
+//  VNET PEERING HUB-SPOKE
+module peering 'modules/peerHubSpoke.bicep' = {
+  name: 'vnet-peering-hub-spoke'
+  params: {
+    vnetHubName: vnetshub.outputs.vnetName
+    vnetSpokeName: vnetsspoke.outputs.vnetName
+  }
+}
+
+//  ZONAS DNS PRIVADAS
+module dnsPZone './modules/privateDNSZone.bicep' = {
+  name: 'private-dns-zones'
+  params: {
+    vnetIds: [
+      vnetshub.outputs.vnetId
+      vnetsspoke.outputs.vnetId
+    ]
+  }
+}
+
+//  LOG ANALYTICS WORKSPACE
 module logAnalytics './modules/LogAnalytics.bicep' = {
+  name: 'log-analytics'
   params: {
     location: location
     environment: environment
@@ -53,9 +82,9 @@ module logAnalytics './modules/LogAnalytics.bicep' = {
   }
 }
 
-
-//App Insights
+//  APPLICATION INSIGHTS
 module appInsights './modules/AppInsights.bicep' = {
+  name: 'application-insights'
   params: {
     location: location
     appiName: 'appi-${namingConvention}-001'
@@ -63,8 +92,9 @@ module appInsights './modules/AppInsights.bicep' = {
   }
 }
 
-//App Service Plan
+//  APP SERVICE PLAN
 module appServicePlan './modules/AppServicePlan.bicep' = {
+  name: 'app-service-plan'
   params: {
     location: location
     appServicePlanName: 'asp-${namingConvention}-001'
@@ -72,22 +102,24 @@ module appServicePlan './modules/AppServicePlan.bicep' = {
   }
 }
 
-
-//Web App
+//  WEB APP
 module webApp './modules/webApp.bicep' = {
+  name: 'web-app'
   params: {
     location: location
     appServicePlanId: appServicePlan.outputs.appServicePlanId
     webAppName: take('web${environment}${uniqueString(resourceGroup().id)}', 50)
-    vnetIntegrationSubnetId: vnet.outputs.subnetResourceIds[0]
+    vnetIntegrationSubnetId: '${vnetsspoke.outputs.vnetId}/subnets/snet-web-app'
     appiId: appInsights.outputs.appiId
     keyVaultName: keyVaultName
     logAnalyticsId: logAnalytics.outputs.logAnalyticsId
   }
 }
 
-//SQL Server
+
+//  SQL SERVER
 module sqlServer './modules/sqlServer.bicep' = {
+  name: 'sql-server'
   params: {
     location: location
     sqlServerName: take('sql-${namingConvention}-${uniqueString(resourceGroup().id)}-001', 63)
@@ -99,12 +131,12 @@ module sqlServer './modules/sqlServer.bicep' = {
   }
 }
 
-
-//Asignación de roles a Key Vault
+//  RBACK KEY VAULT
 module rbacKeyVault './modules/RBACKeyVault.bicep' = {
+  name: 'rbac-key-vault'
+  scope: resourceGroup(keyVaultResourceGroupName) 
   params: {
-    keyVaultName: keyVaultName
-    keyVaultResourceGroupName: keyVaultResourceGroupName
+    keyVaultName: keyVaultName    
     roleAssignments: [
       {
         principalId: webApp.outputs.webAppPrincipalId
@@ -115,40 +147,45 @@ module rbacKeyVault './modules/RBACKeyVault.bicep' = {
   }
 }
 
-//Simulacion de existencia de zonas DNS privadas
-module dnsPZone './modules/privateDNSZone.bicep' = {
-  name: 'layer-dnspzone-deployment'
-  params: {
-    vnetId: vnet.outputs.vnetId
-  }
+resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
+  name: keyVaultName
+  scope: resourceGroup(keyVaultResourceGroupName)
 }
 
-//Private Endpoint para Key Vault
+
+// PRIVATE ENDPOINT KEYVAULT
 module privateEndpointKeyVault './modules/privateEndpoint.bicep' = {
+  name: 'private-endpoint-keyvault'
   params: {
     location: location
     groupIds: [
       'vault'
     ]
     privateEndpointName: 'pep-kv-${namingConvention}-001'
-    privateEndpointSubnetId: vnet.outputs.subnetResourceIds[1]
+    privateEndpointSubnetId: '${vnetshub.outputs.vnetId}/subnets/snet-hub-private-endpoints'
     privateLinkName: 'kvLink-${namingConvention}-001'
-    privateLinkServiceId: keyVaultResourceId
+    privateLinkServiceId: keyVault.id
     privateDnsZoneId: dnsPZone.outputs.kvPrivateDnsZoneId
   }
 }
 
-//Private Endpoint para SQL Server
+
+// PRIVATE ENDPOINT SERVIDOR SQL
 module privateEndpointSqlServer './modules/privateEndpoint.bicep' = {
+  name: 'private-endpoint-sql-server'
   params: {
     location: location
     groupIds: [
       'sqlServer'
     ]
     privateEndpointName: 'pep-sql-${namingConvention}-001'
-    privateEndpointSubnetId: vnet.outputs.subnetResourceIds[1]
+    privateEndpointSubnetId: '${vnetsspoke.outputs.vnetId}/subnets/snet-spoke-private-endpoints'
     privateLinkName: 'sqlLink-${namingConvention}-001'
     privateLinkServiceId: sqlServer.outputs.sqlServerResourceId
     privateDnsZoneId: dnsPZone.outputs.sqlPrivateDnsZoneId
   }
 }
+
+
+output spokeSubnetIds array = vnetsspoke.outputs.subnetResourceIds
+output hubSubnetIds array = vnetshub.outputs.subnetResourceIds
