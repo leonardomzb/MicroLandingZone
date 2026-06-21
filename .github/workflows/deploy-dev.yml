@@ -3,7 +3,7 @@ name: Deploy a Azure
 on:
   workflow_dispatch:
   push:
-    branches: [ infra ]
+    branches: [ feature/pipeline ]
   pull_request:
     branches: [ main ]
 
