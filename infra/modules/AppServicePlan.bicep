@@ -18,6 +18,9 @@ module appServicePlan 'br/public:avm/res/web/serverfarm:0.7.0' = {
     skuCapacity: environment == 'prod' ? 3 : 1
     skuName: environment == 'prod' ? 'P1v3' : 'B1'
     zoneRedundant: environment == 'prod' ? true : false
+    tags: {
+      Environment: environment
+    }
   }
 }
 

@@ -15,6 +15,8 @@ param appiId string
 param keyVaultName string
 @description('Resource ID del Log Analytics Workspace para configurar diagnósticos')
 param logAnalyticsId string
+@description('Entorno de despliegue')
+param environment string
 
 module webApp 'br/public:avm/res/web/site:0.23.1' = {
   name: '${webAppName}-deployment'
@@ -59,6 +61,9 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
         ]
       }
     ]
+    tags: {
+      Environment: environment
+    }
   }
 }
 

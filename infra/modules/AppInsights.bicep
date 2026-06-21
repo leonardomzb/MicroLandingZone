@@ -8,6 +8,8 @@ param location string
 param appiName string
 @description('ID del recurso del área de trabajo de App Insights')
 param workspaceResourceId string
+@description('Entorno de despliegue')
+param environment string
 
 module component 'br/public:avm/res/insights/component:0.7.2' = {
   name: '${appiName}-deployment'
@@ -16,6 +18,9 @@ module component 'br/public:avm/res/insights/component:0.7.2' = {
     location: location
     workspaceResourceId: workspaceResourceId
     applicationType: 'web'
+    tags: {
+      Environment: environment
+    }
   }
 }
 

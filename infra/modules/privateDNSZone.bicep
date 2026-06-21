@@ -4,6 +4,8 @@ metadata description = 'Modulo de creacion de zona DNS privada'
 
 @description('ID de la VNet a la que se asociarán las zonas DNS privadas')
 param vnetIds array
+@description('Entorno de despliegue')
+param environment string
 
 // Vnets id a formato AVM
 var networkLinks = [for id in vnetIds: {
@@ -14,9 +16,12 @@ var networkLinks = [for id in vnetIds: {
 module kvPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
   name: 'kvPrivateDnsZoneDeployment'
   params: {
-    name: 'privatelink${environment().suffixes.keyvaultDns}'
+    name: 'privatelink${az.environment().suffixes.keyvaultDns}'
     location: 'global'
     virtualNetworkLinks: networkLinks
+    tags: {
+      Environment: environment
+    }
   }
 }
 
@@ -24,9 +29,12 @@ module kvPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
 module sqlPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
   name: 'sqlPrivateDnsZoneDeployment'
   params: {
-    name: 'privatelink${environment().suffixes.sqlServerHostname}'
+    name: 'privatelink${az.environment().suffixes.sqlServerHostname}'
     location: 'global'
     virtualNetworkLinks: networkLinks
+    tags: {
+      Environment: environment
+    }
   }
 }
 

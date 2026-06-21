@@ -15,6 +15,8 @@ param privateLinkServiceId string
 param groupIds array
 @description('Resource ID de la zona DNS privada')
 param privateDnsZoneId string = ''
+@description('Entorno de despliegue')
+param environment string
 
 module privateEndpoint 'br/public:avm/res/network/private-endpoint:0.12.1' = {
   name: 'pep-${privateEndpointName}-deployment'
@@ -40,5 +42,8 @@ module privateEndpoint 'br/public:avm/res/network/private-endpoint:0.12.1' = {
           ]
         }
       : null
+    tags: {
+      Environment: environment
+    }
   }
 }

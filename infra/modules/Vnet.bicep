@@ -10,6 +10,8 @@ param vnetName string
 param addressSpace string
 @description('Lista de subredes a crear')
 param subnets array
+@description('Entorno de despliegue')
+param environment string
 
 module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
   name: '${vnetName}-deployment'
@@ -24,6 +26,9 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.9.0' = {
         delegation: subnet.delegation
       }
     ]
+     tags: {
+      Environment: environment
+    }
   }
 }
 

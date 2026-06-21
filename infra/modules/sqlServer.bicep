@@ -67,6 +67,9 @@ module server 'br/public:avm/res/sql/server:0.21.2' = {
         ]
       }
     ]
+    tags: {
+      Environment: environment
+    }
   }
 }
 

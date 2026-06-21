@@ -37,6 +37,7 @@ module vnetshub 'modules/Vnet.bicep' = {
     addressSpace: vnetConfig[0].addressPrefix
     subnets: vnetConfig[0].subnets
     vnetName: '${vnetConfig[0].name}-${namingConvention}-001'
+    environment: environment
   }
 }
 
@@ -48,6 +49,7 @@ module vnetsspoke 'modules/Vnet.bicep' = {
     addressSpace: vnetConfig[1].addressPrefix
     subnets: vnetConfig[1].subnets
     vnetName: '${vnetConfig[1].name}-${namingConvention}-001'
+    environment: environment
   }
 }
 
@@ -69,6 +71,7 @@ module dnsPZone './modules/privateDNSZone.bicep' = {
       vnetshub.outputs.vnetId
       vnetsspoke.outputs.vnetId
     ]
+    environment: environment
   }
 }
 
@@ -89,6 +92,7 @@ module appInsights './modules/AppInsights.bicep' = {
     location: location
     appiName: 'appi-${namingConvention}-001'
     workspaceResourceId: logAnalytics.outputs.logAnalyticsId
+    environment: environment
   }
 }
 
@@ -113,6 +117,7 @@ module webApp './modules/webApp.bicep' = {
     appiId: appInsights.outputs.appiId
     keyVaultName: keyVaultName
     logAnalyticsId: logAnalytics.outputs.logAnalyticsId
+    environment: environment
   }
 }
 
@@ -166,6 +171,7 @@ module privateEndpointKeyVault './modules/privateEndpoint.bicep' = {
     privateLinkName: 'kvLink-${namingConvention}-001'
     privateLinkServiceId: keyVault.id
     privateDnsZoneId: dnsPZone.outputs.kvPrivateDnsZoneId
+    environment: environment
   }
 }
 
@@ -183,6 +189,7 @@ module privateEndpointSqlServer './modules/privateEndpoint.bicep' = {
     privateLinkName: 'sqlLink-${namingConvention}-001'
     privateLinkServiceId: sqlServer.outputs.sqlServerResourceId
     privateDnsZoneId: dnsPZone.outputs.sqlPrivateDnsZoneId
+    environment: environment
   }
 }
 
