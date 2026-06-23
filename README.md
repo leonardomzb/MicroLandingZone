@@ -4,6 +4,7 @@ Proyecto personal de practica. Despliegue de infraestructura en Azure mediante u
 
 ## Componentes implementados
 
+  - Application Gateway
   - Virtual Network
   - Virtual Network Peering
   - Private DNS Zone
@@ -20,7 +21,9 @@ Proyecto personal de practica. Despliegue de infraestructura en Azure mediante u
   
   - Arquitectura Hub & Spoke
   - 100% Bicep con el uso de Azure Verified Modules
-  - Servidor SQL sin acceso público
+  - Web App y Servidor SQL sin acceso público
+  - Unico Acceso publico a traves de Application Gateway
+  - WAF para protección de Web App.
   - Uso de Managed Identity
   - Secretos en Key Vault
   - Conectividad privada mediante Private Link
