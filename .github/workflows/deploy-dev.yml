@@ -1,9 +1,9 @@
-name: Deploy a Azure
+name: Deploy a Azure.
 
 on:
   workflow_dispatch:
   push:
-    branches: [ feature/pipeline ]
+    branches: [ feature/appgateway ]
   pull_request:
     branches: [ main ]
 
@@ -15,9 +15,9 @@ jobs:
   push_infra:
     uses: leonardomzb/workflow-templates/.github/workflows/bicep-pipeline.yml@main
     with:
-      deploy_name: 'hubspoke-dep-stack'
+      deploy_name: 'hubspoke-agw-dev-stack'
       scopeLevel: 'resourceGroup' 
-      resource_group: 'rg-hubspoke'
+      resource_group: 'rg-hubspoke-agw'
       #azure_region: 'eastus'
       #bicep_version: '0.43.8'
       bicep_file: './infra/main.bicep'
