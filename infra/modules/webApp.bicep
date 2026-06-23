@@ -26,6 +26,7 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
     serverFarmResourceId: appServicePlanId
     virtualNetworkSubnetResourceId: vnetIntegrationSubnetId
     location: location
+    publicNetworkAccess: 'Disabled'
     managedIdentities: {
       systemAssigned: true
     }
@@ -68,8 +69,10 @@ module webApp 'br/public:avm/res/web/site:0.23.1' = {
 }
 
 @description('Resource ID de la Web App creada')
-output webAppId string = webApp.outputs.resourceId
+output webAppResourceId string = webApp.outputs.resourceId
 @description('Hostname predeterminado de la Web App')
 output webAppDefaultHostname string = webApp.outputs.defaultHostname
 @description('ID del principal de identidad administrada de la Web App')
 output webAppPrincipalId string = webApp.outputs.systemAssignedMIPrincipalId!
+@description('Nombre de la Web App creada')
+output webAppName string = webApp.outputs.name

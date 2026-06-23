@@ -43,6 +43,9 @@ module vnetshub 'modules/Vnet.bicep' = {
 
 //  VNET SPOKE
 module vnetsspoke 'modules/Vnet.bicep' = {
+  dependsOn: [
+    vnetshub
+  ]
   name: 'vnet-spoke'
   params: {
     location: location
@@ -56,7 +59,7 @@ module vnetsspoke 'modules/Vnet.bicep' = {
 
 //  VNET PEERING HUB-SPOKE
 module peering 'modules/peerHubSpoke.bicep' = {
-  name: 'vnet-peering-hub-spoke'
+  name: 'vnet-peering-hub-spoke' 
   params: {
     vnetHubName: vnetshub.outputs.vnetName
     vnetSpokeName: vnetsspoke.outputs.vnetName
@@ -140,6 +143,9 @@ module sqlServer './modules/sqlServer.bicep' = {
 module rbacKeyVault './modules/RBACKeyVault.bicep' = {
   name: 'rbac-key-vault'
   scope: resourceGroup(keyVaultResourceGroupName) 
+   dependsOn: [
+    vnetshub
+  ]
   params: {
     keyVaultName: keyVaultName    
     roleAssignments: [
@@ -160,7 +166,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
 
 // PRIVATE ENDPOINT KEYVAULT
 module privateEndpointKeyVault './modules/privateEndpoint.bicep' = {
-  name: 'private-endpoint-keyvault'
+  name: 'private-endpoint-keyvault'  
   params: {
     location: location
     groupIds: [
@@ -194,5 +200,32 @@ module privateEndpointSqlServer './modules/privateEndpoint.bicep' = {
 }
 
 
-output spokeSubnetIds array = vnetsspoke.outputs.subnetResourceIds
-output hubSubnetIds array = vnetshub.outputs.subnetResourceIds
+// PRIVATE ENDPOINT WEB APP
+module privateEndpointWebApp './modules/privateEndpoint.bicep' = {
+  name: 'private-endpoint-web-app'  
+  params: {
+    location: location
+    groupIds: [
+      'sites'
+    ]
+    privateEndpointName: 'pep-web-${namingConvention}-001'
+    privateEndpointSubnetId: '${vnetsspoke.outputs.vnetId}/subnets/snet-spoke-private-endpoints'
+    privateLinkName: 'webLink-${namingConvention}-001'
+    privateLinkServiceId: webApp.outputs.webAppResourceId
+    privateDnsZoneId: dnsPZone.outputs.webPrivateDnsZoneID
+    environment: environment
+  }
+}
+
+
+// APPLICATION GATEWAY WAF V2
+module appGateway 'modules/AppGateway.bicep' = {
+  name: 'app-gateway-deployment'
+  params: {
+    location: location
+    agwName: 'agw-${namingConvention}-001'
+    environment: environment
+    webAppName: webApp.outputs.webAppName
+    appGatewaySubnet: '${vnetshub.outputs.vnetId}/subnets/snet-app-gateway'
+  }
+}
