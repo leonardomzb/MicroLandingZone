@@ -12,7 +12,7 @@ var networkLinks = [for id in vnetIds: {
   virtualNetworkResourceId: id
 }]
 
-// DNS para Key Vault
+// DNS PARA KEY VAULT
 module kvPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
   name: 'kvPrivateDnsZoneDeployment'
   params: {
@@ -25,7 +25,7 @@ module kvPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
   }
 }
 
-// DNS para Key Vault
+// DNS SERVER SQL
 module sqlPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
   name: 'sqlPrivateDnsZoneDeployment'
   params: {
@@ -38,5 +38,19 @@ module sqlPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
   }
 }
 
+// DNS WEB APP
+module webAppPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.6.0' = {
+  name: 'webAppDnsZoneDeployment'
+  params: {
+    name: 'privatelink.azurewebsites.net'
+    location: 'global'
+    virtualNetworkLinks: networkLinks
+    tags: {
+      Environment: environment
+    }
+  }
+}
+
 output kvPrivateDnsZoneId string = kvPrivateDnsZone.outputs.resourceId
 output sqlPrivateDnsZoneId string = sqlPrivateDnsZone.outputs.resourceId
+output webPrivateDnsZoneID string = webAppPrivateDnsZone.outputs.resourceId
